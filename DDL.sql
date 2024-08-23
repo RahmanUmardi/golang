@@ -1,0 +1,39 @@
+CREATE DATABASE enigmalaundry;
+
+CREATE TABLE customer(
+	customer_id INT PRIMARY KEY,
+	name VARCHAR(255) NOT NULL,
+	phone VARCHAR(255) NOT NULL,
+	address VARCHAR(255) DEFAULT,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE service (
+	service_id INT PRIMARY KEY,
+	service_name VARCHAR(255) NOT NULL,
+	unit VARCHAR(255) NOT NULL,
+	price INT NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE orders (
+	order_id INT PRIMARY KEY,
+	customer_id INT NOT NULL,
+	order_date TIMESTAMP NOT NULL,
+	completion_date TIMESTAMP NOT NULL,
+	received_by VARCHAR(255) NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+);
+
+CREATE TABLE order_detail (
+	order_detail_id SERIAL PRIMARY KEY,
+	order_id INT NOT NULL,
+	service_id INT NOT NULL,
+	qty INT NOT NULL,
+	FOREIGN KEY (order_id) REFERENCES orders(order_id),
+	FOREIGN KEY (service_id) REFERENCES services(service_id)
+);

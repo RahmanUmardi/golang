@@ -1,62 +1,98 @@
 package order
 
 import (
-	"challenge-godb/connection"
+	"bufio"
 	"challenge-godb/entity"
 	"database/sql"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 )
 
-func InputCreateOrder() {
+func InputCreateOrder(db *sql.DB) {
 	var order entity.Order
+	var orderDetail entity.OrderDetail
+	scanner := bufio.NewScanner(os.Stdin)
+
 	fmt.Print("Input Order ID: ")
-	fmt.Scan(&order.Order_id)
+	scanner.Scan()
+	order.Order_id, _ = strconv.Atoi(scanner.Text())
+	orderDetail.Order_id, _ = strconv.Atoi(scanner.Text())
+
+	fmt.Print("Input Order Detail ID: ")
+	scanner.Scan()
+	orderDetail.Order_detail_id, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input Customer ID: ")
-	fmt.Scan(&order.Customer_id)
-	fmt.Print("Input Receiver: ")
-	fmt.Scan(&order.Received_by)
+	scanner.Scan()
+	order.Customer_id, _ = strconv.Atoi(scanner.Text())
+
+	fmt.Print("Input Service ID: ")
+	scanner.Scan()
+	orderDetail.Service_id, _ = strconv.Atoi(scanner.Text())
+
+	fmt.Print("Input Qty: ")
+	scanner.Scan()
+	orderDetail.Qty, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input Order Date (YYYY-MM-DD): ")
-	fmt.Scan(&order.Order_date)
+	scanner.Scan()
+	orderDate, _ := time.Parse("2006-01-02", scanner.Text())
+	order.Order_date = orderDate
+
+	order.Completion_date = sql.NullTime{}
+
+	fmt.Print("Input Receiver: ")
+	scanner.Scan()
+	order.Received_by = scanner.Text()
+
 	order.Created_at = time.Now()
 	order.Updated_at = time.Now()
 
-	CreateOrder(order)
+	CreateOrder(db, order)
+	CreateOrderDetail(db, orderDetail)
 }
 
-func InputCompleteOrder() {
+func InputCompleteOrder(db *sql.DB) {
 	var id int
-	fmt.Print("Input Order ID: ")
-	fmt.Scan(&id)
-	var completionDate time.Time
-	fmt.Print("Input Completion Date (YYYY-MM-DD): ")
-	fmt.Scan(&completionDate)
+	scanner := bufio.NewScanner(os.Stdin)
 
-	CompleteOrder(id, completionDate)
+	fmt.Print("Input Order ID: ")
+	scanner.Scan()
+	id, _ = strconv.Atoi(scanner.Text())
+
+	fmt.Print("Input Completion Date (YYYY-MM-DD): ")
+	scanner.Scan()
+	completionDate, _ := time.Parse("2006-01-02", scanner.Text())
+
+	CompleteOrder(db, id, completionDate)
 }
 
-func InputViewListOrder() {
-	orders := ViewOfListOrder()
+func InputViewListOrder(db *sql.DB) {
+	orders := ViewOfListOrder(db)
 	for _, order := range orders {
 		fmt.Printf("%+v\n", order)
 	}
 }
 
-func InputViewOrderDetailsByID() {
+func InputViewOrderDetailsByID(db *sql.DB) {
 	var id int
+	scanner := bufio.NewScanner(os.Stdin)
+
 	fmt.Print("Input Order ID: ")
-	fmt.Scan(&id)
-	order := ViewDetailsOrderById(id)
+	scanner.Scan()
+	id, _ = strconv.Atoi(scanner.Text())
+
+	order := ViewDetailsOrderById(db, id)
 	fmt.Printf("%+v\n", order)
 }
 
-func CreateOrder(order entity.Order) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func CreateOrder(db *sql.DB, order entity.Order) {
 	var err error
 
 	var customerExists bool
-	customerQuery := "SELECT EXISTS(SELECT 1 FROM customer WHERE customer_id=$1;)"
+	customerQuery := "SELECT EXISTS(SELECT 1 FROM customer WHERE customer_id=$1)"
 	err = db.QueryRow(customerQuery, order.Customer_id).Scan(&customerExists)
 	if err != nil {
 		fmt.Printf("Failed to check if customer exists: %v\n", err)
@@ -68,7 +104,7 @@ func CreateOrder(order entity.Order) {
 	}
 
 	var orderExists bool
-	orderQuery := "SELECT EXISTS(SELECT 1 FROM orders WHERE order_id=$1;)"
+	orderQuery := "SELECT EXISTS(SELECT 1 FROM orders WHERE order_id=$1)"
 	err = db.QueryRow(orderQuery, order.Order_id).Scan(&orderExists)
 	if err != nil {
 		fmt.Printf("Failed to check if order exists: %v\n", err)
@@ -79,7 +115,7 @@ func CreateOrder(order entity.Order) {
 		return
 	}
 
-	Create := "INSERT INTO orders (order_id, customer_id, order_date, completion_date, received_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7);"
+	Create := "INSERT INTO orders (order_id, customer_id, order_date, completion_date, received_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"
 
 	_, err = db.Exec(Create, order.Order_id, order.Customer_id, order.Order_date, order.Completion_date, order.Received_by, order.Created_at, order.Updated_at)
 	if err != nil {
@@ -89,9 +125,32 @@ func CreateOrder(order entity.Order) {
 	}
 }
 
-func CompleteOrder(orderID int, completionDate time.Time) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func CreateOrderDetail(db *sql.DB, order_detail entity.OrderDetail) {
+	var err error
+
+	var orderExists bool
+	orderQuery := "SELECT EXISTS(SELECT 1 FROM orders WHERE order_id=$1)"
+	err = db.QueryRow(orderQuery, order_detail.Order_id).Scan(&orderExists)
+	if err != nil {
+		fmt.Printf("Failed to check if order exists: %v\n", err)
+		return
+	}
+	if !orderExists {
+		fmt.Println("order not found.")
+		return
+	}
+
+	Create := "INSERT INTO order_detail (order_detail_id, order_id, service_id, qty) VALUES ($1, $2, $3, $4, )"
+
+	_, err = db.Exec(Create, order_detail.Order_detail_id, order_detail.Order_id, order_detail.Service_id, order_detail.Qty)
+	if err != nil {
+		panic(err)
+	} else {
+		fmt.Println("Succes create order detail")
+	}
+}
+
+func CompleteOrder(db *sql.DB, orderID int, completionDate time.Time) {
 	var err error
 
 	var orderExists bool
@@ -116,9 +175,7 @@ func CompleteOrder(orderID int, completionDate time.Time) {
 	fmt.Println("Order successfully completed.")
 }
 
-func ViewOfListOrder() []entity.Order {
-	db := connection.ConnectDb()
-	defer db.Close()
+func ViewOfListOrder(db *sql.DB) []entity.Order {
 
 	sqlStatment := "SELECT * FROM orders;"
 
@@ -155,9 +212,7 @@ func ScanOrder(rows *sql.Rows) []entity.Order {
 	return orders
 }
 
-func ViewDetailsOrderById(order_id int) entity.Order {
-	db := connection.ConnectDb()
-	defer db.Close()
+func ViewDetailsOrderById(db *sql.DB, order_id int) entity.Order {
 	var err error
 
 	sqlStatment := "SELECT * FROM orders WHERE order_id = $1;"

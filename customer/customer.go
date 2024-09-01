@@ -1,70 +1,98 @@
 package customer
 
 import (
-	"challenge-godb/connection"
+	"bufio"
 	"challenge-godb/entity"
 	"database/sql"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 )
 
-func InputCreateCustomer() {
+func InputCreateCustomer(db *sql.DB) {
 	var customer entity.Customer
+	scanner := bufio.NewScanner(os.Stdin)
+
 	fmt.Print("Input Customer ID: ")
-	fmt.Scan(&customer.Customer_id)
+	scanner.Scan()
+	customer.Customer_id, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input Name: ")
-	fmt.Scan(&customer.Name)
+	scanner.Scan()
+	customer.Name = scanner.Text()
+
 	fmt.Print("Input Phone: ")
-	fmt.Scan(&customer.Phone)
+	scanner.Scan()
+	customer.Phone, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input Address: ")
-	fmt.Scan(&customer.Address)
+	scanner.Scan()
+	customer.Address = scanner.Text()
+
 	customer.Created_at = time.Now()
 	customer.Updated_at = time.Now()
 
-	CreateCustomer(customer)
+	CreateCustomer(db, customer)
 }
 
-func InputViewListCustomer() {
-	customers := ViewOfListCustomer()
+func InputViewListCustomer(db *sql.DB) {
+	customers := ViewOfListCustomer(db)
 	for _, customer := range customers {
 		fmt.Printf("%+v\n", customer)
 	}
 }
 
-func InputViewCustomerDetailsByID() {
+func InputViewCustomerDetailsByID(db *sql.DB) {
 	var id int
+	scanner := bufio.NewScanner(os.Stdin)
+
 	fmt.Print("Input Customer ID: ")
-	fmt.Scan(&id)
-	customer := ViewDetailsCustomerById(id)
+	scanner.Scan()
+	id, _ = strconv.Atoi(scanner.Text())
+
+	customer := ViewDetailsCustomerById(db, id)
 	fmt.Printf("%+v\n", customer)
 }
 
-func InputUpdateCustomer() {
+func InputUpdateCustomer(db *sql.DB) {
 	var customer entity.Customer
+	scanner := bufio.NewScanner(os.Stdin)
+
 	fmt.Print("Input Customer ID: ")
-	fmt.Scan(&customer.Customer_id)
+	scanner.Scan()
+	customer.Customer_id, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input New Name: ")
-	fmt.Scan(&customer.Name)
+	scanner.Scan()
+	customer.Name = scanner.Text()
+
 	fmt.Print("Input New Phone: ")
-	fmt.Scan(&customer.Phone)
+	scanner.Scan()
+	customer.Phone, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input New Address: ")
-	fmt.Scan(&customer.Address)
+	scanner.Scan()
+	customer.Address = scanner.Text()
+
 	customer.Created_at = time.Now()
 	customer.Updated_at = time.Now()
 
-	UpdateCustomer(customer)
+	UpdateCustomer(db, customer)
 }
 
-func InputDeleteCustomer() {
+func InputDeleteCustomer(db *sql.DB) {
 	var id int
+	scanner := bufio.NewScanner(os.Stdin)
+
 	fmt.Print("Input Customer ID: ")
-	fmt.Scan(&id)
-	DeleteCustomer(id)
+	scanner.Scan()
+	id, _ = strconv.Atoi(scanner.Text())
+
+	DeleteCustomer(db, id)
 }
 
-func CreateCustomer(customer entity.Customer) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func CreateCustomer(db *sql.DB, customer entity.Customer) {
 	var err error
 
 	exists, err := ValidasiCreateByCustomerId(db, customer.Customer_id)
@@ -93,9 +121,7 @@ func ValidasiCreateByCustomerId(db *sql.DB, id int) (bool, error) {
 	return exists, err
 }
 
-func ViewOfListCustomer() []entity.Customer {
-	db := connection.ConnectDb()
-	defer db.Close()
+func ViewOfListCustomer(db *sql.DB) []entity.Customer {
 
 	sqlStatment := "SELECT * FROM customer;"
 
@@ -131,9 +157,7 @@ func ScanCustomer(rows *sql.Rows) []entity.Customer {
 	return customers
 }
 
-func ViewDetailsCustomerById(customer_id int) entity.Customer {
-	db := connection.ConnectDb()
-	defer db.Close()
+func ViewDetailsCustomerById(db *sql.DB, customer_id int) entity.Customer {
 	var err error
 
 	sqlStatment := "SELECT * FROM customer WHERE customer_id = $1;"
@@ -149,9 +173,7 @@ func ViewDetailsCustomerById(customer_id int) entity.Customer {
 	return customer
 }
 
-func UpdateCustomer(customer entity.Customer) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func UpdateCustomer(db *sql.DB, customer entity.Customer) {
 	var err error
 
 	var exists bool
@@ -176,9 +198,7 @@ func UpdateCustomer(customer entity.Customer) {
 	}
 }
 
-func DeleteCustomer(id int) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func DeleteCustomer(db *sql.DB, id int) {
 	var err error
 
 	var exists bool

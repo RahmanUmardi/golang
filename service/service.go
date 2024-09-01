@@ -1,70 +1,94 @@
 package service
 
 import (
-	"challenge-godb/connection"
+	"bufio"
 	"challenge-godb/entity"
 	"database/sql"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 )
 
-func InputCreateService() {
+func InputCreateService(db *sql.DB) {
+	scanner := bufio.NewScanner(os.Stdin)
 	var service entity.Service
+
 	fmt.Print("Input Service ID: ")
-	fmt.Scan(&service.Service_id)
+	scanner.Scan()
+	service.Service_id, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input Service Name: ")
-	fmt.Scan(&service.Service_name)
+	scanner.Scan()
+	service.Service_name = scanner.Text()
+
 	fmt.Print("Input Unit: ")
-	fmt.Scan(&service.Unit)
+	scanner.Scan()
+	service.Unit = scanner.Text()
+
 	fmt.Print("Input Price: ")
-	fmt.Scan(&service.Price)
+	scanner.Scan()
+	service.Price, _ = strconv.Atoi(scanner.Text())
+
 	service.Created_at = time.Now()
 	service.Updated_at = time.Now()
 
-	CreateService(service)
+	CreateService(db, service)
 }
 
-func InputViewListService() {
-	services := ViewOfListService()
+func InputViewListService(db *sql.DB) {
+	services := ViewOfListService(db)
 	for _, service := range services {
 		fmt.Printf("%+v\n", service)
 	}
 }
 
-func InputViewServiceDetailsByID() {
-	var id int
+func InputViewServiceDetailsByID(db *sql.DB) {
+	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print("Input Service ID: ")
-	fmt.Scan(&id)
-	service := ViewDetailsServiceById(id)
+	scanner.Scan()
+	id, _ := strconv.Atoi(scanner.Text())
+
+	service := ViewDetailsServiceById(db, id)
 	fmt.Printf("%+v\n", service)
 }
 
-func InputUpdateService() {
+func InputUpdateService(db *sql.DB) {
+	scanner := bufio.NewScanner(os.Stdin)
 	var service entity.Service
+
 	fmt.Print("Input Service ID: ")
-	fmt.Scan(&service.Service_id)
+	scanner.Scan()
+	service.Service_id, _ = strconv.Atoi(scanner.Text())
+
 	fmt.Print("Input New Service Name: ")
-	fmt.Scan(&service.Service_name)
+	scanner.Scan()
+	service.Service_name = scanner.Text()
+
 	fmt.Print("Input New Unit: ")
-	fmt.Scan(&service.Unit)
+	scanner.Scan()
+	service.Unit = scanner.Text()
+
 	fmt.Print("Input New Price: ")
-	fmt.Scan(&service.Price)
+	scanner.Scan()
+	service.Price, _ = strconv.Atoi(scanner.Text())
+
 	service.Created_at = time.Now()
 	service.Updated_at = time.Now()
 
-	UpdateService(service)
+	UpdateService(db, service)
 }
 
-func InputDeleteService() {
-	var id int
+func InputDeleteService(db *sql.DB) {
+	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Print("Input Service ID: ")
-	fmt.Scan(&id)
-	DeleteService(id)
+	scanner.Scan()
+	id, _ := strconv.Atoi(scanner.Text())
+
+	DeleteService(db, id)
 }
 
-func CreateService(service entity.Service) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func CreateService(db *sql.DB, service entity.Service) {
 	var err error
 
 	exists, err := ValidasiCreateByServiceId(db, service.Service_id)
@@ -94,9 +118,7 @@ func ValidasiCreateByServiceId(db *sql.DB, id int) (bool, error) {
 	return exists, err
 }
 
-func ViewOfListService() []entity.Service {
-	db := connection.ConnectDb()
-	defer db.Close()
+func ViewOfListService(db *sql.DB) []entity.Service {
 
 	sqlStatment := "SELECT * FROM service;"
 
@@ -132,9 +154,7 @@ func ScanService(rows *sql.Rows) []entity.Service {
 	return services
 }
 
-func ViewDetailsServiceById(service_id int) entity.Service {
-	db := connection.ConnectDb()
-	defer db.Close()
+func ViewDetailsServiceById(db *sql.DB, service_id int) entity.Service {
 	var err error
 
 	sqlStatment := "SELECT * FROM service WHERE service_id = $1;"
@@ -150,9 +170,7 @@ func ViewDetailsServiceById(service_id int) entity.Service {
 	return service
 }
 
-func UpdateService(service entity.Service) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func UpdateService(db *sql.DB, service entity.Service) {
 	var err error
 
 	var exists bool
@@ -177,9 +195,7 @@ func UpdateService(service entity.Service) {
 	}
 }
 
-func DeleteService(id int) {
-	db := connection.ConnectDb()
-	defer db.Close()
+func DeleteService(db *sql.DB, id int) {
 	var err error
 
 	var exists bool

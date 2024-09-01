@@ -4,19 +4,27 @@ import (
 	"challenge-godb/customer"
 	"challenge-godb/order"
 	"challenge-godb/service"
+	"database/sql"
+
+	"bufio"
+	"challenge-godb/connection"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func main() {
+	db := connection.ConnectDb()
+	defer db.Close()
+
 	for {
 		switch MainMenu() {
 		case 1:
-			CustomerMenu()
+			CustomerMenu(db)
 		case 2:
-			ServiceMenu()
+			ServiceMenu(db)
 		case 3:
-			OrderMenu()
+			OrderMenu(db)
 		case 4:
 			fmt.Println("Exit")
 			os.Exit(0)
@@ -27,19 +35,26 @@ func main() {
 }
 
 func MainMenu() int {
+	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Enigma Laundry")
 	fmt.Println("1. Customer")
 	fmt.Println("2. Service")
 	fmt.Println("3. Order")
 	fmt.Println("4. Exit")
 	fmt.Print("Input : ")
-	var input int
-	fmt.Scan(&input)
+
+	scanner.Scan()
+	input, err := strconv.Atoi(scanner.Text())
+	if err != nil {
+		fmt.Println("Invalid input")
+		return 0
+	}
 	return input
 }
 
-func CustomerMenu() {
+func CustomerMenu(db *sql.DB) {
 	for {
+		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Println("\nCustomer Menu:")
 		fmt.Println("1. Create Customer")
 		fmt.Println("2. View Of List Customer")
@@ -48,20 +63,20 @@ func CustomerMenu() {
 		fmt.Println("5. Delete Customer")
 		fmt.Println("6. Back to Main Menu")
 		fmt.Print("Input : ")
-		var input int
-		fmt.Scan(&input)
+		scanner.Scan()
+		input, _ := strconv.Atoi(scanner.Text())
 
 		switch input {
 		case 1:
-			customer.InputCreateCustomer()
+			customer.InputCreateCustomer(db)
 		case 2:
-			customer.InputViewListCustomer()
+			customer.InputViewListCustomer(db)
 		case 3:
-			customer.InputViewCustomerDetailsByID()
+			customer.InputViewCustomerDetailsByID(db)
 		case 4:
-			customer.InputUpdateCustomer()
+			customer.InputUpdateCustomer(db)
 		case 5:
-			customer.InputDeleteCustomer()
+			customer.InputDeleteCustomer(db)
 		case 6:
 			return
 		default:
@@ -70,8 +85,9 @@ func CustomerMenu() {
 	}
 }
 
-func ServiceMenu() {
+func ServiceMenu(db *sql.DB) {
 	for {
+		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Println("\nService Menu:")
 		fmt.Println("1. Create Service")
 		fmt.Println("2. View Of List Services")
@@ -80,20 +96,20 @@ func ServiceMenu() {
 		fmt.Println("5. Delete Service")
 		fmt.Println("6. Back to Main Menu")
 		fmt.Print("Input : ")
-		var input int
-		fmt.Scan(&input)
+		scanner.Scan()
+		input, _ := strconv.Atoi(scanner.Text())
 
 		switch input {
 		case 1:
-			service.InputCreateService()
+			service.InputCreateService(db)
 		case 2:
-			service.InputViewListService()
+			service.InputViewListService(db)
 		case 3:
-			service.InputViewServiceDetailsByID()
+			service.InputViewServiceDetailsByID(db)
 		case 4:
-			service.InputUpdateService()
+			service.InputUpdateService(db)
 		case 5:
-			service.InputDeleteService()
+			service.InputDeleteService(db)
 		case 6:
 			return
 		default:
@@ -102,8 +118,9 @@ func ServiceMenu() {
 	}
 }
 
-func OrderMenu() {
+func OrderMenu(db *sql.DB) {
 	for {
+		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Println("\nOrder Menu:")
 		fmt.Println("1. Create Order")
 		fmt.Println("2. Complete Order")
@@ -111,18 +128,18 @@ func OrderMenu() {
 		fmt.Println("4. View Order Details by ID")
 		fmt.Println("5. Back to Main Menu")
 		fmt.Print("Input : ")
-		var input int
-		fmt.Scan(&input)
+		scanner.Scan()
+		input, _ := strconv.Atoi(scanner.Text())
 
 		switch input {
 		case 1:
-			order.InputCreateOrder()
+			order.InputCreateOrder(db)
 		case 2:
-			order.InputCompleteOrder()
+			order.InputCompleteOrder(db)
 		case 3:
-			order.InputViewListOrder()
+			order.InputViewListOrder(db)
 		case 4:
-			order.InputViewOrderDetailsByID()
+			order.InputViewOrderDetailsByID(db)
 		case 5:
 			return
 		default:
